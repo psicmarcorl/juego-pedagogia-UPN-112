@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Saltos del Saber · Mundo 1</title>
+<meta name="description" content="Videojuego de plataformas con preguntas sobre pedagogía y sus autores. Departamento Psicopedagógico, UPN Unidad 112.">
+<meta name="theme-color" content="#0E1B38">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,400;0,700;0,800;1,400&family=Press+Start+2P&family=Rubik:wght@600;700&display=swap">
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<main id="escena" class="escena">
+  <div class="pad izq">
+    <button type="button" class="tecla" data-accion="izq" aria-label="Moverse a la izquierda">◀</button>
+    <button type="button" class="tecla" data-accion="der" aria-label="Moverse a la derecha">▶</button>
+  </div>
+  <div class="marco">
+    <canvas id="lienzo" width="640" height="360" role="img" aria-label="Saltos del Saber, juego de plataformas sobre pedagogía"></canvas>
+  </div>
+  <div class="pad der">
+    <button type="button" class="tecla gis" data-accion="gis" aria-label="Lanzar gis">GIS</button>
+    <button type="button" class="tecla salto" data-accion="saltar" aria-label="Saltar">SALTO</button>
+  </div>
+</main>
+<nav id="barra" class="barra" aria-label="Opciones del juego">
+  <span class="ayuda">← → moverse · Espacio saltar · X lanzar gis · P pausa</span>
+  <div class="acciones">
+    <button type="button" id="b-pausa">Pausa</button>
+    <button type="button" id="b-sonido" aria-pressed="true">Sonido: sí</button>
+    <button type="button" id="b-pantalla">Pantalla completa</button>
+  </div>
+</nav>
+<div id="capa" class="capa" hidden></div>
+
+<script src="js/sprites.js"></script>
+<script src="js/sonido.js"></script>
+<script src="js/interfaz.js"></script>
+<script src="js/preguntas-respaldo.js"></script>
+<script src="js/preguntas.js"></script>
+<script src="js/niveles.js"></script>
+<script src="js/motor.js"></script>
+</body>
+</html>
