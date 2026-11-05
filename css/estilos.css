@@ -1,24 +1,26 @@
-/* Saltos del Saber · Estilos. Paleta institucional UPN 112 sobre fondo nocturno. */
+/* Saltos del Saber · Estilos (estilo 64). Paleta institucional UPN 112 sobre fondo nocturno. */
 :root {
   --noche: #0E1B38;
   --marino: #1F3864;
   --azul: #1A5FB4;
   --cielo: #7FB8EC;
-  --oro: #FFD977;
-  --papel: #FFFAF0;
+  --oro: #F2B632;
+  --oro-claro: #FFD977;
+  --papel: #FFFDF7;
+  --papel-2: #F6EEDC;
   --tinta: #1B2333;
   --apoyo: #3E4A5E;
   --bien: #22704A;
   --mal: #A3261E;
-  --pixel: "Press Start 2P", "Courier New", monospace;
+  --juego: "Rubik", Arial, sans-serif;
   --texto: "Nunito Sans", Arial, sans-serif;
-  --titulo: "Rubik", Arial, sans-serif;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; }
 body {
-  background: var(--noche); color: #E8EDF5; font-family: var(--texto); font-size: 16px; line-height: 1.5;
+  background: radial-gradient(ellipse at 50% 0%, #1B3366 0%, var(--noche) 60%); color: #E8EDF5;
+  font-family: var(--texto); font-size: 16px; line-height: 1.5;
   min-height: 100vh; min-height: 100dvh;
   display: grid; align-content: center; justify-items: center; gap: 8px;
   padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
@@ -27,8 +29,8 @@ body {
 
 /* Escena y lienzo */
 .escena { display: grid; grid-template-areas: "marco"; gap: 12px; justify-items: center; align-items: center; }
-.marco { grid-area: marco; background: #0A1222; padding: 6px; border-radius: 12px; box-shadow: 0 0 0 2px var(--marino); }
-#lienzo { display: block; width: 320px; max-width: calc(100vw - 40px); height: auto; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 6px; background: var(--noche); cursor: pointer; }
+.marco { grid-area: marco; background: linear-gradient(#2A4A86, #14254A); padding: 6px; border-radius: 16px; box-shadow: 0 0 0 2px #35589A, 0 14px 40px rgba(0, 0, 0, .45); }
+#lienzo { display: block; width: 320px; max-width: calc(100vw - 40px); height: auto; border-radius: 11px; background: var(--noche); cursor: pointer; }
 
 /* Controles táctiles: solo en pantallas táctiles */
 .pad { display: none; gap: 14px; touch-action: none; }
@@ -36,12 +38,13 @@ body {
 .pad.der { grid-area: der; }
 .tecla {
   width: 76px; height: 76px; border-radius: 50%; border: 3px solid var(--tinta);
-  background: var(--cielo); color: var(--tinta); font-family: var(--pixel); font-size: 18px;
-  box-shadow: 0 5px 0 var(--tinta); touch-action: none; -webkit-user-select: none; user-select: none;
+  background: radial-gradient(circle at 35% 30%, #CFE6FA, var(--cielo) 55%, #4F8FCC); color: var(--tinta);
+  font-family: var(--juego); font-weight: 800; font-size: 22px;
+  box-shadow: 0 5px 0 var(--tinta), inset 0 3px 0 rgba(255, 255, 255, .45); touch-action: none; -webkit-user-select: none; user-select: none;
 }
-.tecla.salto { background: var(--oro); font-size: 10px; }
-.tecla.gis { background: #FFFFFF; font-size: 10px; }
-.tecla.activa { transform: translateY(4px); box-shadow: 0 1px 0 var(--tinta); }
+.tecla.salto { background: radial-gradient(circle at 35% 30%, #FFF1B8, var(--oro-claro) 50%, #E39B12); font-size: 13px; }
+.tecla.gis { background: radial-gradient(circle at 35% 30%, #FFFFFF, #F1F3F6 50%, #B9C3D0); font-size: 13px; }
+.tecla.activa { transform: translateY(4px); box-shadow: 0 1px 0 var(--tinta), inset 0 3px 0 rgba(255, 255, 255, .45); }
 body.tactil .pad { display: flex; }
 body.tactil .escena { grid-template-areas: "marco marco" "izq der"; width: 100%; }
 body.tactil .pad.izq { justify-self: start; padding-left: 8px; }
@@ -56,70 +59,77 @@ body.tactil .pad.der { justify-self: end; padding-right: 8px; }
 .barra { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: center; font-size: 13px; color: #9FB0CF; }
 .barra .acciones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .barra button {
-  font: 700 13px var(--texto); color: #E8EDF5; background: var(--marino); border: 1px solid #2E4A80;
-  border-radius: 6px; padding: 6px 12px; cursor: pointer;
+  font: 700 13px var(--texto); color: #E8EDF5; background: linear-gradient(#2A4A86, var(--marino)); border: 1px solid #3A5C9C;
+  border-radius: 999px; padding: 6px 14px; cursor: pointer;
 }
-.barra button:hover { background: #274580; }
+.barra button:hover { background: linear-gradient(#3A5C9C, #274580); }
 body.tactil .barra .ayuda { display: none; }
 
 /* Ventanas sobre el juego */
 .capa {
-  position: fixed; inset: 0; z-index: 10; background: rgba(8, 14, 28, .72);
+  position: fixed; inset: 0; z-index: 10; background: rgba(8, 14, 28, .62);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
   display: grid; place-items: center; overflow-y: auto;
   padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   -webkit-user-select: text; user-select: text;
 }
 .capa[hidden] { display: none; }
 .panel {
-  width: 100%; max-width: 540px; background: var(--papel); color: var(--tinta);
-  border: 3px solid var(--tinta); box-shadow: 6px 6px 0 var(--tinta); border-radius: 4px;
+  width: 100%; max-width: 560px; background: linear-gradient(var(--papel), var(--papel-2)); color: var(--tinta);
+  border-radius: 22px; box-shadow: 0 0 0 3px var(--marino), 0 0 0 6px var(--oro), 0 18px 40px rgba(0, 0, 0, .45);
   padding: 20px; display: grid; gap: 14px; outline: none;
 }
-.panel.ancho { max-width: 640px; }
+.panel.ancho { max-width: 660px; }
 .panel p { margin: 0; }
-.panel h2 { margin: 0; font-family: var(--titulo); color: var(--marino); font-size: 1.5rem; }
-.panel .tag { font-family: var(--pixel); font-size: 9px; line-height: 1.7; color: var(--azul); }
+.panel h2 { margin: 0; font-family: var(--juego); font-weight: 800; color: var(--marino); font-size: 1.5rem; }
+.panel .tag { font-family: var(--juego); font-weight: 800; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--azul); }
 .quien { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; }
-.quien canvas { width: 48px; height: 64px; background: #9CCBF0; border: 2px solid var(--tinta); image-rendering: pixelated; }
-.quien b { font-family: var(--titulo); font-size: 1.1rem; color: var(--marino); }
-.q-texto { font-size: 1.1rem; font-weight: 700; }
+.quien canvas { width: 84px; height: 84px; border-radius: 50%; box-shadow: 0 0 0 3px var(--marino), 0 0 0 5px var(--oro); }
+.quien b { font-family: var(--juego); font-weight: 700; font-size: 1.15rem; color: var(--marino); }
+.q-texto { font-size: 1.1rem; font-weight: 800; }
 .texto { display: grid; gap: 10px; }
-.opciones { display: grid; gap: 8px; }
+.opciones { display: grid; gap: 10px; }
 .opcion {
   display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; text-align: left;
-  font: 1rem/1.35 var(--texto); color: var(--tinta); background: #FFFFFF;
-  border: 2px solid var(--tinta); border-radius: 4px; padding: 10px 12px; cursor: pointer;
+  font: 1rem/1.35 var(--texto); color: var(--tinta); background: linear-gradient(#FFFFFF, #E9EEF6);
+  border: 0; border-radius: 14px; padding: 10px 12px; cursor: pointer;
+  box-shadow: inset 0 -3px 0 #C3CCDB, 0 0 0 2px var(--marino);
 }
-.opcion span { font-family: var(--pixel); font-size: 10px; color: var(--azul); }
-.opcion:hover, .opcion:focus-visible { background: #FFE7A3; box-shadow: inset 0 0 0 2px #E3A21A; outline: none; }
+.opcion span {
+  font-family: var(--juego); font-weight: 800; font-size: .95rem; color: #FFFFFF;
+  background: linear-gradient(#3B7DD8, var(--marino)); width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; box-shadow: inset 0 2px 0 rgba(255, 255, 255, .35);
+}
+.opcion:hover, .opcion:focus-visible { background: linear-gradient(#FFF3C4, #F7D774); box-shadow: inset 0 -3px 0 #D9A62A, 0 0 0 2px var(--marino); outline: none; }
 .timer { display: grid; gap: 4px; }
-.timer small { font-family: var(--pixel); font-size: 8px; }
-.timer i { display: block; height: 12px; border: 2px solid var(--tinta); background: #FFFFFF; overflow: hidden; }
-.timer i b { display: block; height: 100%; background: #2E8B57; transform-origin: left; animation: vaciar linear forwards; }
+.timer small { font-family: var(--juego); font-weight: 800; font-size: .72rem; letter-spacing: .1em; color: var(--apoyo); }
+.timer i { display: block; height: 12px; border-radius: 6px; box-shadow: 0 0 0 2px var(--marino); background: #FFFFFF; overflow: hidden; }
+.timer i b { display: block; height: 100%; background: linear-gradient(#5BC383, #2E8B57); transform-origin: left; animation: vaciar linear forwards; }
 @keyframes vaciar { from { transform: scaleX(1); } to { transform: scaleX(0); background: #C0392B; } }
 .pista { font-size: .82rem; color: var(--apoyo); }
-.resultado { font-family: var(--pixel); font-size: 13px; line-height: 1.7; color: var(--marino); }
+.resultado { font-family: var(--juego); font-weight: 800; font-size: 1.35rem; line-height: 1.25; color: var(--marino); letter-spacing: .02em; }
 .resultado.ok { color: var(--bien); }
 .resultado.no { color: var(--mal); }
 .elegida { color: var(--apoyo); }
-.premio { background: #E8F3EC; border: 2px solid var(--bien); border-radius: 4px; padding: 8px 10px; }
+.premio { background: #E8F3EC; border-radius: 12px; box-shadow: 0 0 0 2px var(--bien); padding: 8px 12px; }
 .nota { font-size: .92rem; color: var(--apoyo); }
-.fuente { font-size: .85rem; color: var(--apoyo); border-top: 2px dashed #C9C2B0; padding-top: 10px; }
+.fuente { font-size: .85rem; color: var(--apoyo); border-top: 2px dashed #D9CDB0; padding-top: 10px; }
 .btn {
-  justify-self: start; font-family: var(--pixel); font-size: 10px; line-height: 1.4; color: #FFFFFF;
-  background: var(--marino); border: 0; border-radius: 3px; padding: 12px 14px; cursor: pointer; box-shadow: 0 4px 0 var(--tinta);
+  justify-self: start; font-family: var(--juego); font-weight: 800; font-size: .95rem; letter-spacing: .04em; color: #FFFFFF;
+  background: linear-gradient(#3B7DD8, var(--marino)); border: 0; border-radius: 999px; padding: 11px 20px; cursor: pointer;
+  box-shadow: 0 4px 0 #14254A, inset 0 2px 0 rgba(255, 255, 255, .3);
 }
-.btn:hover, .btn:focus-visible { background: var(--azul); outline: 3px solid #E3A21A; outline-offset: 2px; }
-.btn.sec { background: #FFFFFF; color: var(--marino); border: 2px solid var(--marino); box-shadow: none; }
+.btn:hover, .btn:focus-visible { background: linear-gradient(#4C8DE6, var(--azul)); outline: 3px solid var(--oro); outline-offset: 2px; }
+.btn.sec { background: linear-gradient(#FFFFFF, #E9EEF6); color: var(--marino); box-shadow: 0 0 0 2px var(--marino), 0 4px 0 #C3CCDB; }
 .botones { display: flex; flex-wrap: wrap; gap: 10px; }
 
 /* Formulario de inicio */
 .campo { display: grid; gap: 4px; font-weight: 700; color: var(--marino); }
 .campo input {
-  font: 1rem var(--texto); color: var(--tinta); background: #FFFFFF; border: 2px solid var(--tinta);
-  border-radius: 4px; padding: 9px 10px; -webkit-user-select: text; user-select: text;
+  font: 1rem var(--texto); color: var(--tinta); background: #FFFFFF; border: 0; border-radius: 12px;
+  box-shadow: 0 0 0 2px var(--marino); padding: 10px 12px; -webkit-user-select: text; user-select: text;
 }
-.campo input:focus { outline: 3px solid #E3A21A; outline-offset: 1px; }
+.campo input:focus { outline: 3px solid var(--oro); outline-offset: 2px; }
 .check { display: flex; gap: 10px; align-items: center; }
 .check input { width: 20px; height: 20px; accent-color: var(--azul); }
 table { border-collapse: collapse; width: 100%; font-size: .92rem; }
@@ -129,11 +139,11 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #E2DACA; v
 
 /* Resultados */
 .datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 0; }
-.datos div { background: #FFFFFF; border: 2px solid #E2DACA; border-radius: 4px; padding: 8px 10px; }
+.datos div { background: #FFFFFF; border-radius: 12px; box-shadow: 0 0 0 2px #E2DACA; padding: 8px 12px; }
 .datos dt { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--apoyo); font-weight: 800; }
 .datos dd { margin: 0; font-weight: 800; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
 .codigo { display: grid; gap: 4px; justify-items: start; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--apoyo); font-weight: 800; }
-.codigo b { font-family: var(--pixel); font-size: 16px; letter-spacing: .08em; color: var(--marino); background: #FFE7A3; padding: 8px 10px; border: 2px dashed var(--tinta); }
+.codigo b { font-family: var(--juego); font-weight: 800; font-size: 1.4rem; letter-spacing: .12em; color: var(--marino); background: linear-gradient(#FFF3C4, #F7D774); padding: 8px 14px; border-radius: 12px; box-shadow: 0 0 0 2px var(--marino); }
 
 @media (prefers-reduced-motion: reduce) {
   .tecla.activa { transform: none; }

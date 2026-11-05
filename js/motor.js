@@ -1,13 +1,12 @@
 'use strict';
 /* Saltos del Saber · Motor del juego: física, colisiones, cámara, obstáculos, preguntas y pantallas. */
 (() => {
-  const VW = 320, VH = 180, T = 16, OFFY = 4, G = 0.35, MAX_CAIDA = 6, PASO = 1000 / 60;
+  const VW = 320, VH = 180, T = 16, OFFY = 4, G = 0.35, MAX_CAIDA = 6, PASO = 1000 / 60, ALTO_ALE = 22;
   const SOLIDOS = new Set(['G', 'B', '=', '?', 'g', 'h', 'U']);
   const BLOQUES_PREGUNTA = new Set(['?', 'g', 'h']);
   const ENEMIGOS = new Set(['cerdo', 'loro', 'regla']);
   const lienzo = document.getElementById('lienzo');
   const ctx = lienzo.getContext('2d');
-  lienzo.width = VW * 2; lienzo.height = VH * 2;
   const esTactil = window.matchMedia('(pointer: coarse)').matches;
   document.body.classList.toggle('tactil', esTactil);
 
@@ -85,9 +84,10 @@
       puntos: 0, ideas: 0, animo: 3, maxAnimo: 5, gis: false,
       mentorHecho: false, mentorEnCurso: false, completo: false, frames: 0, cam: 0
     };
-    const y0 = (nivel.inicio.y + 1) * T + OFFY - 15;
+    // Ale mide un bloque y medio de alto (22 unidades) con el estilo nuevo.
+    const y0 = (nivel.inicio.y + 1) * T + OFFY - ALTO_ALE;
     J.checkpoint = { x: nivel.inicio.x * T + 3, y: y0 };
-    J.jug = { x: J.checkpoint.x, y: y0, w: 10, h: 15, vx: 0, vy: 0, suelo: false, dir: 1, coyote: 0, buffer: 0, inv: 0, anim: 0 };
+    J.jug = { x: J.checkpoint.x, y: y0, w: 10, h: ALTO_ALE, vx: 0, vy: 0, suelo: false, dir: 1, coyote: 0, buffer: 0, inv: 0, anim: 0 };
     nivel.entidades.forEach(d => J.ent.push(crearEntidad(d)));
     Preguntas.reiniciar();
   }
@@ -304,7 +304,7 @@
     // Punto de control, mentor y meta
     J.ent.forEach(e => {
       if (e.tipo === 'bandera' && !e.tomada && p.x > e.x) {
-        e.tomada = true; J.checkpoint = { x: e.x, y: (8 + 1) * T + OFFY - 15 };
+        e.tomada = true; J.checkpoint = { x: e.x, y: (8 + 1) * T + OFFY - ALTO_ALE };
         Sonido.reproducir('foco'); textoFlotante('PUNTO DE CONTROL', e.x - 56, e.y - 12, '#FFD977');
       }
       if (e.tipo === 'mentor' && !J.mentorHecho && !J.mentorEnCurso && p.suelo && p.x + p.w >= e.x - 8) encuentroMentor(e);
@@ -410,90 +410,75 @@
     estado = 'jugando';
   }
 
-  // ---------- Dibujo ----------
-  let cielo = null;
-  function R(x, y, w, h, col) { ctx.fillStyle = col; ctx.fillRect(x, y, w, h); }
-  function capa(img, factor, y) {
-    const off = -(Math.round(J.cam * factor) % img.width);
-    for (let x = off; x < VW; x += img.width) ctx.drawImage(img, x, y);
-  }
-  function dibujarNivel() {
-    const cam = J.cam;
-    if (!cielo) { cielo = ctx.createLinearGradient(0, 0, 0, VH); cielo.addColorStop(0, '#86C3EF'); cielo.addColorStop(1, '#DFF0FB'); }
-    ctx.fillStyle = cielo; ctx.fillRect(0, 0, VW, VH);
-    capa(Sprites.CAPAS.nubes, 0.15, 10);
-    capa(Sprites.CAPAS.montes, 0.25, 0);
-    Sprites.castillo(ctx, nivel.castilloX - Math.round(cam * 0.4), 96);
-    capa(Sprites.CAPAS.colinas, 0.5, 0);
+  // ---------- Dibujo (estilo 64: imágenes en caché a la resolución de la pantalla) ----------
+  function dibujarNivel(t) {
+    const cam = J.cam, S = Sprites;
+    S.fondo(ctx, cam, nivel.castilloX, t);
 
-    const tx0 = Math.max(0, Math.floor(cam / T)), tx1 = Math.min(J.W - 1, tx0 + 21);
+    const tx0 = Math.max(0, Math.floor(cam / T) - 1), tx1 = Math.min(J.W - 1, tx0 + 22);
+    const esPlat = (tx, ty) => tx >= 0 && tx < J.W && J.mapa[ty][tx] === '=';
+    const esSuelo = (tx, ty) => tx < 0 || tx >= J.W || J.mapa[ty][tx] === 'G';
     for (let ty = 0; ty < J.H; ty++) for (let tx = tx0; tx <= tx1; tx++) {
       const c = J.mapa[ty][tx]; if (c === '.') continue;
       const x = tx * T - cam;
       let y = ty * T + OFFY;
       const gb = J.golpes.find(b => b.tx === tx && b.ty === ty);
-      if (gb) y -= Math.round(Math.sin((10 - gb.t) / 10 * Math.PI) * 4);
-      let img = null;
-      if (c === 'G') img = Sprites.TILES[((ty > 0 && J.mapa[ty - 1][tx] === 'G') ? 'tierra' : 'pasto') + (tx % 4)];
-      else if (c === 'B') img = Sprites.TILES.libros;
-      else if (c === '=') img = Sprites.TILES.plataforma;
-      else if (BLOQUES_PREGUNTA.has(c)) img = Sprites.TILES.pregunta;
-      else if (c === 'U') img = Sprites.TILES.usado;
-      if (img) ctx.drawImage(img, x, y);
-      else if (c === 'o') Sprites.dibujar(ctx, 'bulb', x + 4, y + 3 + Math.round(Math.sin(reloj * 0.08 + tx) * 1.2));
+      if (gb) y -= Math.sin((10 - gb.t) / 10 * Math.PI) * 4;
+      if (c === 'G') {
+        S.dibujar(ctx, ((ty > 0 && J.mapa[ty - 1][tx] === 'G') ? 'tierra' : 'pasto') + (tx % 4), x, y);
+        if (!esSuelo(tx - 1, ty)) { ctx.fillStyle = 'rgba(20,12,6,.35)'; ctx.fillRect(x, y + 2, 1.2, T); }
+        if (!esSuelo(tx + 1, ty)) { ctx.fillStyle = 'rgba(20,12,6,.35)'; ctx.fillRect(x + T - 1.2, y + 2, 1.2, T); }
+      }
+      else if (c === 'B') S.dibujar(ctx, 'librero', x, y);
+      else if (c === '=') {
+        const i = esPlat(tx - 1, ty), d = esPlat(tx + 1, ty);
+        S.dibujar(ctx, i && d ? 'pilaM' : (!i && d ? 'pilaI' : (i && !d ? 'pilaD' : 'pilaS')), x, y);
+      }
+      else if (BLOQUES_PREGUNTA.has(c)) S.dibujar(ctx, 'pregunta', x, y);
+      else if (c === 'U') S.dibujar(ctx, 'usado', x, y);
+      else if (c === 'o') S.dibujar(ctx, 'foco', x + 8, y + 7 + Math.sin(reloj * 0.08 + tx) * 1.2);
+    }
+    // Hoyos: sombra en el fondo
+    for (let tx = tx0; tx <= tx1; tx++) {
+      if (J.mapa[9][tx] === '.' && J.mapa[10][tx] === '.') {
+        const g = ctx.createLinearGradient(0, 152, 0, 180); g.addColorStop(0, 'rgba(40,28,18,0)'); g.addColorStop(1, 'rgba(14,9,6,.55)');
+        ctx.fillStyle = g; ctx.fillRect(tx * T - cam, 152, T, 28);
+      }
     }
 
     J.ent.forEach(e => {
       const x = e.x - cam;
-      if (x < -80 || x > VW + 40) return;
-      if (e.tipo === 'cerdo' && e.vivo) Sprites.dibujar(ctx, Math.floor(reloj / 10) % 2 ? 'pig2' : 'pig', x, e.y, e.vx > 0);
-      else if (e.tipo === 'loro' && e.vivo) Sprites.dibujar(ctx, Math.floor(reloj / 8) % 2 ? 'loro2' : 'loro', x, e.y, e.dir > 0);
-      else if (e.tipo === 'regla' && e.vivo) Sprites.dibujar(ctx, 'regla', x, e.y);
-      else if (e.tipo === 'bandera') {
-        R(x, e.y, 2, 32, '#5B3A29'); R(x - 1, e.y - 2, 4, 3, '#F2B632');
-        for (let r = 0; r < 10; r++) { const w = 10 - Math.abs(r - 5) * 2; if (w > 0) R(x + 2, e.y + 1 + r, w, 1, e.tomada ? '#F2B632' : '#7D93B6'); }
-      } else if (e.tipo === 'mentor') {
-        Sprites.dibujar(ctx, e.autor, x, e.y, true);
-        if (!J.mentorHecho) {
-          const by = e.y - 16 + Math.round(Math.sin(reloj * 0.1) * 1.5);
-          R(x + 2, by, 9, 11, '#FFFFFF'); R(x + 5, by + 11, 3, 2, '#FFFFFF');
-          Sprites.texto(ctx, '!', x + 3, by + 2, 8, '#1F3864', 'left', null);
-        }
-      } else if (e.tipo === 'meta') {
-        R(x, e.y, 2, 56, '#5B3A29'); R(x - 2, e.y - 3, 6, 4, '#F2B632');
-        for (let r = 0; r < 12; r++) { const w = 12 - Math.abs(r - 6) * 2; if (w > 0) R(x + 2, e.y + 3 + r, w, 1, J.completo ? '#F2B632' : '#1F3864'); }
-      }
+      if (x < -80 || x > VW + 60) return;
+      if (e.tipo === 'cerdo' && e.vivo) S.dibujar(ctx, 'cerdo' + (Math.floor(reloj / 7) % 4), x + e.w / 2, e.y + e.h, e.vx > 0);
+      else if (e.tipo === 'loro' && e.vivo) S.dibujar(ctx, 'loro' + (Math.floor(reloj / 6) % 4), x + e.w / 2, e.y + e.h / 2, e.dir > 0);
+      else if (e.tipo === 'regla' && e.vivo) S.dibujar(ctx, 'regla', x + e.w / 2, e.y + e.h);
+      else if (e.tipo === 'bandera') S.bandera(ctx, x, e.y, e.tomada);
+      else if (e.tipo === 'mentor') {
+        S.dibujar(ctx, e.autor + '_quieto' + (Math.floor(reloj / 16) % 4), x + e.w / 2, e.y + e.h, true);
+        if (!J.mentorHecho) S.globo(ctx, x - 42, e.y - 34 + Math.sin(reloj * 0.1) * 1.2, '¡Te espero, Ale!', -1);
+      } else if (e.tipo === 'meta') S.meta(ctx, x, e.y, J.completo, reloj * 16);
     });
 
     J.items.forEach(it => {
       const x = it.x - cam;
-      if (it.clase === 'gis') Sprites.dibujar(ctx, 'gis', x + 4, it.y);
-      else Sprites.dibujar(ctx, 'heartBig', x + 1, it.y + 2);
+      if (it.clase === 'gis') S.dibujar(ctx, 'gis', x + it.w / 2, it.y + it.h / 2);
+      else S.dibujar(ctx, 'corazon', x + it.w / 2, it.y + it.h / 2 + 1);
     });
-    J.proy.forEach(g => { R(g.x - cam, g.y, 4, 3, '#FFFFFF'); R(g.x - cam + 3, g.y, 1, 3, '#C9D2DE'); });
+    J.proy.forEach(g => S.proyectil(ctx, g.x - cam, g.y));
 
     const p = J.jug;
     if (!(p.inv > 0 && Math.floor(p.inv / 4) % 2)) {
-      const clave = !p.suelo ? 'ale_salto' : (Math.abs(p.vx) > 0.2 && Math.floor(p.anim / 7) % 2 ? 'ale_paso' : 'ale');
-      Sprites.dibujar(ctx, clave, p.x - 1 - cam, p.y - 1, p.dir < 0);
+      const clave = !p.suelo ? 'ale_salto'
+        : (Math.abs(p.vx) > 0.2 ? 'ale_camina' + (Math.floor(p.anim / 4) % 8) : 'ale_quieto' + (Math.floor(reloj / 16) % 4));
+      S.dibujar(ctx, clave, p.x + p.w / 2 - cam, p.y + p.h, p.dir < 0);
     }
 
     J.part.forEach(q => {
-      if (q.tipo === 'texto') Sprites.texto(ctx, q.s, Math.round(q.x - cam), Math.round(q.y), 8, q.color);
-      else if (q.tipo === 'foco') Sprites.dibujar(ctx, 'bulb', q.x - cam, q.y);
-      else R(Math.round(q.x - cam), Math.round(q.y), 2, 2, '#F4F1EA');
+      if (q.tipo === 'texto') S.texto(ctx, q.s, q.x - cam, q.y, 7, q.color);
+      else if (q.tipo === 'foco') S.dibujar(ctx, 'foco', q.x - cam + 4, q.y + 5);
+      else S.polvo(ctx, q.x - cam, q.y, Math.min(1, q.vida / 12));
     });
-    dibujarMarcador();
-  }
-  function dibujarMarcador() {
-    R(0, 0, VW, 18, 'rgba(15,30,61,.82)');
-    const n = Math.max(3, J.animo);
-    for (let i = 0; i < n; i++) Sprites.dibujar(ctx, i < J.animo ? 'heart' : 'heartOff', 6 + i * 9, 6);
-    const x = 6 + n * 9 + 8;
-    Sprites.dibujar(ctx, 'bulb', x, 4); Sprites.texto(ctx, 'x' + J.ideas, x + 11, 6, 8, '#FFFFFF');
-    if (J.gis) Sprites.dibujar(ctx, 'gis', x + 48, 3);
-    Sprites.texto(ctx, 'MUNDO 1-1', 162, 6, 8, '#FFD977', 'center');
-    Sprites.texto(ctx, String(J.puntos).padStart(6, '0'), 314, 6, 8, '#FFFFFF', 'right');
+    S.hud(ctx, { animo: J.animo, ideas: J.ideas, gis: J.gis, puntos: J.puntos, mundo: 'MUNDO 1-1', nombre: nivel.nombre });
   }
 
   // ---------- Bucle principal ----------
@@ -510,9 +495,10 @@
     Entrada.fin();
   }
   function dibujar(t) {
-    ctx.setTransform(2, 0, 0, 2, 0, 0); ctx.imageSmoothingEnabled = false;
+    const k = Sprites.K;
+    ctx.setTransform(k, 0, 0, k, 0, 0); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     if (estado === 'titulo' || estado === 'inicio' || !J) Sprites.titulo(ctx, t, esTactil);
-    else dibujarNivel();
+    else dibujarNivel(t);
   }
   let ultimo = performance.now(), acum = 0;
   function bucle(ahora) {
@@ -534,13 +520,17 @@
     else if (esTactil) ah -= 170;
     const w = Math.max(200, Math.floor(Math.min(aw, ah * 16 / 9)));
     lienzo.style.width = w + 'px'; lienzo.style.height = Math.floor(w * 9 / 16) + 'px';
+    // Resolución interna según el tamaño real en pantalla (2 a 3 píxeles por unidad del juego)
+    const k = Math.max(2, Math.min(3, Math.round(w * (window.devicePixelRatio || 1) / VW)));
+    if (k !== Sprites.K) { Sprites.preparar(k); lienzo.width = VW * k; lienzo.height = VH * k; }
   }
   window.addEventListener('resize', ajustar);
   window.addEventListener('orientationchange', ajustar);
   ajustar();
 
-  const fuente = (document.fonts && document.fonts.load) ? document.fonts.load('16px "Press Start 2P"') : Promise.resolve();
-  fuente.catch(() => {}).then(() => { /* el título se vuelve a dibujar en cada cuadro */ });
+  // Cuando llega la tipografía, se vuelven a generar las imágenes que llevan texto (bloque "?", "UPN").
+  const fuente = (document.fonts && document.fonts.load) ? document.fonts.load('800 16px Rubik') : Promise.resolve();
+  fuente.catch(() => {}).then(() => { Sprites.preparar(Sprites.K, true); });
   requestAnimationFrame(bucle);
 
   // Acceso para pruebas automáticas

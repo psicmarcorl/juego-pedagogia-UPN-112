@@ -1,6 +1,6 @@
 # Saltos del Saber
 
-Videojuego de plataformas en 2D, con estética de 8 bits, para repasar pedagogía y a sus autores.
+Videojuego de plataformas en 2D, con gráficos al estilo de las consolas de 64 bits, para repasar pedagogía y a sus autores.
 Departamento Psicopedagógico · Universidad Pedagógica Nacional, Unidad 112.
 
 Ale, estudiante de la UPN, recorre mundos inspirados en pedagogos y pedagogas. Al golpear desde abajo
@@ -48,7 +48,7 @@ y no quieres cambiarlo a público, usa la opción 2.
 
 **Opción 2. Sin internet.** Descarga el repositorio (botón **Code → Download ZIP**), descomprímelo y abre
 `index.html` con doble clic. En este modo el juego usa la copia de respaldo de las preguntas
-(ver abajo) y la tipografía de 8 bits se reemplaza por una genérica si no hay conexión.
+(ver abajo) y, si no hay conexión, la tipografía redonda se reemplaza por una genérica.
 
 ## Cómo editar las preguntas
 
@@ -78,7 +78,7 @@ Si no tienes Node.js instalado, pídeselo a quien te ayude con el repositorio.
 ```
 index.html                    el juego
 css/estilos.css               estilos de pantallas y ventanas
-js/sprites.js                 personajes, bloques y fondos en pixel art (dibujados con código)
+js/sprites.js                 personajes, bloques y fondos con volumen y luz (dibujados con código)
 js/niveles.js                 mapas de los mundos
 js/motor.js                   física, obstáculos, cámara y flujo del juego
 js/preguntas.js               lectura del banco y ventana de preguntas
