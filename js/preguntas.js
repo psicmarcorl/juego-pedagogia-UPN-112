@@ -11,6 +11,9 @@ const Preguntas = (() => {
     pestalozzi: { nombre: 'Johann Heinrich Pestalozzi', corto: 'Pestalozzi' },
     froebel:    { nombre: 'Friedrich Fröbel', corto: 'Fröbel' },
     montessori: { nombre: 'María Montessori', corto: 'Montessori' },
+    dewey:      { nombre: 'John Dewey', corto: 'Dewey' },
+    decroly:    { nombre: 'Ovide Decroly', corto: 'Decroly' },
+    freinet:    { nombre: 'Célestin Freinet', corto: 'Freinet' },
     makarenko:  { nombre: 'Antón Makarenko', corto: 'Makarenko' },
     freire:     { nombre: 'Paulo Freire', corto: 'Freire' },
     meirieu:    { nombre: 'Philippe Meirieu', corto: 'Meirieu' },
@@ -120,12 +123,14 @@ const Preguntas = (() => {
       const tituloTxt = esConcepto ? `${nombreAutor(op.mentor)} pregunta` :
         (q.autor === op.mentor ? `${nombreAutor(q.autor)} pregunta` : `Pregunta sobre ${AUTORES[q.autor].nombre}`);
       const orden = q.vf ? q.opciones.map((_, i) => i) : barajar(q.opciones.map((_, i) => i));
+      const puedePista = !q.vf && q.opciones.length >= 4 && op.pistas > 0 && typeof op.usarPista === 'function';
       const raiz = Interfaz.abrir(`
         <div class="panel" role="dialog" aria-modal="true" aria-labelledby="q-texto" tabindex="-1">
           <div class="quien"><canvas class="retrato" aria-hidden="true"></canvas>
             <div><div class="tag">${esc(op.etiqueta)}</div><b>${esc(tituloTxt)}</b></div></div>
           <p id="q-texto" class="q-texto">${esc(q.pregunta)}</p>
           <div class="opciones">${orden.map((oi, k) => `<button type="button" class="opcion" data-oi="${oi}"><span>${k + 1}</span>${esc(q.opciones[oi])}</button>`).join('')}</div>
+          ${puedePista ? `<button type="button" class="btn sec" id="b-pista">Usar pista (${op.pistas})</button>` : ''}
           ${op.tiempo ? '<div class="timer"><small>TIEMPO</small><i><b></b></i></div>' : ''}
           <p class="pista">Elige con el ratón, tocando la opción o con las teclas 1 a ${orden.length}.</p>
         </div>`);
@@ -146,7 +151,7 @@ const Preguntas = (() => {
       }
       function teclas(e) {
         const n = parseInt(e.key, 10);
-        if (n >= 1 && n <= orden.length) { e.preventDefault(); e.stopPropagation(); elegir(orden[n - 1], false); return; }
+        if (n >= 1 && n <= orden.length) { e.preventDefault(); e.stopPropagation(); if (!botones[n - 1].disabled) elegir(orden[n - 1], false); return; }
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
           e.preventDefault();
           const i = botones.indexOf(document.activeElement);
@@ -155,6 +160,14 @@ const Preguntas = (() => {
         }
       }
       botones.forEach(b => b.addEventListener('click', () => elegir(+b.dataset.oi, false)));
+      // Pista (poder de Montessori): tacha dos opciones incorrectas
+      const bp = raiz.querySelector('#b-pista');
+      if (bp) bp.addEventListener('click', () => {
+        if (listo || performance.now() - t0 < 350) return;
+        barajar(botones.filter(b => +b.dataset.oi !== q.correcta)).slice(0, 2).forEach(b => { b.classList.add('tachada'); b.disabled = true; });
+        bp.remove(); op.usarPista();
+        const libre = botones.find(b => !b.disabled); if (libre) libre.focus();
+      });
       document.addEventListener('keydown', teclas, true);
       if (op.tiempo) {
         raiz.querySelector('.timer b').style.animationDuration = SEGUNDOS + 's';

@@ -25,11 +25,12 @@ const Interfaz = (() => {
     });
   }
 
-  function inicio(op, totalPreguntas) {
+  function inicio(op, mundos) {
     return new Promise(resolve => {
       abrir(`<form class="panel" id="f-inicio" tabindex="-1" aria-labelledby="i-titulo">
-        <div class="tag">SALTOS DEL SABER · MUNDO 1</div>
+        <div class="tag">SALTOS DEL SABER</div>
         <h2 id="i-titulo">Antes de empezar</h2>
+        <label class="campo">Mundo <select id="in-mundo">${mundos.map(m => `<option value="${m.n}" ${m.n === op.mundo ? 'selected' : ''}>Mundo ${m.n} · ${esc(m.nombre)}</option>`).join('')}</select></label>
         <label class="campo">Tu nombre <input id="in-nombre" maxlength="40" autocomplete="name" value="${esc(op.nombre || '')}" placeholder="Nombre y apellido"></label>
         <label class="campo">Grupo (opcional) <input id="in-grupo" maxlength="20" value="${esc(op.grupo || '')}" placeholder="Ej. 1.º A"></label>
         <label class="check"><input type="checkbox" id="in-tiempo" ${op.tiempo ? 'checked' : ''}> Tiempo límite para responder (20 segundos)</label>
@@ -41,13 +42,14 @@ const Interfaz = (() => {
           <tr><th>Pausa</th><td>P o Esc</td></tr>
           <tr><th>Responder</th><td>Clic, toque o teclas 1 a 4</td></tr>
         </tbody></table>
-        <p class="nota">Este mundo tiene ${totalPreguntas} preguntas sobre Comenio, Rousseau, Pestalozzi, Fröbel y conceptos básicos.</p>
+        <p class="nota">Cada mundo tiene 12 preguntas. Mundo 1: Comenio, Rousseau, Pestalozzi y Fröbel. Mundo 2: Montessori, Dewey, Decroly, Freinet y la Escuela Nueva.</p>
         <button class="btn" type="submit">COMENZAR ▶</button>
       </form>`);
       const f = capa.querySelector('#f-inicio');
       f.addEventListener('submit', e => {
         e.preventDefault();
         resolve({
+          mundo: parseInt(capa.querySelector('#in-mundo').value, 10) || 1,
           nombre: capa.querySelector('#in-nombre').value.trim(),
           grupo: capa.querySelector('#in-grupo').value.trim(),
           tiempo: capa.querySelector('#in-tiempo').checked,
@@ -93,10 +95,10 @@ const Interfaz = (() => {
     setTimeout(() => capa.querySelector('#b-rep').focus(), 320);
   }
 
-  function resultados(d, repetir) {
+  function resultados(d, repetir, siguiente) {
     abrir(`<div class="panel ancho" role="dialog" aria-modal="true" aria-labelledby="r-titulo" tabindex="-1">
-      <div class="resultado ok" id="r-titulo">¡MUNDO 1 COMPLETADO!</div>
-      <p>Obtuviste el <b>Sello de Yverdon</b>. Pestalozzi estaría orgulloso.</p>
+      <div class="resultado ok" id="r-titulo">¡MUNDO ${d.mundo} COMPLETADO!</div>
+      <p>Obtuviste el <b>${esc(d.sello)}</b> de ${esc(d.mentor)}.</p>
       <dl class="datos">
         <div><dt>Nombre</dt><dd>${esc(d.nombre)}</dd></div>
         <div><dt>Grupo</dt><dd>${esc(d.grupo || '—')}</dd></div>
@@ -110,9 +112,13 @@ const Interfaz = (() => {
       ${filasAutores(d.porAutor)}
       <div class="codigo">Código de verificación<b>${d.codigo}</b></div>
       <p class="nota">Si tu docente lo solicita, toma una captura de esta pantalla y súbela a Classroom o Teams.</p>
-      <button type="button" class="btn" id="b-rep">JUGAR DE NUEVO ▶</button>
+      <div class="botones">
+        ${siguiente ? '<button type="button" class="btn" id="b-sig">SIGUIENTE MUNDO ▶</button>' : ''}
+        <button type="button" class="btn ${siguiente ? 'sec' : ''}" id="b-rep">JUGAR DE NUEVO</button>
+      </div>
     </div>`);
     capa.querySelector('#b-rep').addEventListener('click', repetir);
+    if (siguiente) capa.querySelector('#b-sig').addEventListener('click', siguiente);
     setTimeout(() => capa.querySelector('.panel').focus(), 50);
   }
 

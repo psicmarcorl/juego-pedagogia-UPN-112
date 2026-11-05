@@ -12,7 +12,7 @@ breve y su fuente. Equivocarse en una pregunta nunca quita vidas: la pregunta vu
 | Mundo | Escenario | Mentor | Estado |
 | --- | --- | --- | --- |
 | 1 | Los Alpes de Pestalozzi | Pestalozzi (con Comenio, Rousseau y Fröbel) | **Jugable** |
-| 2 | La Casa de los Niños | Montessori | Pendiente |
+| 2 | La Casa de los Niños (Roma, 1907) | Montessori (con Dewey, Decroly y Freinet) | **Jugable** |
 | 3 | La Colonia Gorki | Makarenko | Pendiente |
 | 4 | Los Círculos de Cultura | Freire | Pendiente |
 | 5 | El Taller de Frankenstein | Meirieu | Pendiente |
@@ -28,6 +28,13 @@ breve y su fuente. Equivocarse en una pregunta nunca quita vidas: la pregunta vu
 - **Responder:** clic, toque o teclas 1 a 4
 
 En celular o tableta aparecen botones en pantalla. Se juega mejor con el teléfono en horizontal.
+
+En la pantalla de inicio se elige el mundo. Al terminar uno, el botón **Siguiente mundo** lleva al que sigue.
+
+**Mundo 2.** Ale recorre una calle de San Lorenzo y entra al aula de la Casa dei Bambini. Algunas cajas de material,
+al responder bien, despliegan una **escalera café** hacia una zona alta. Allí hay un **cubo rosa** que da una **Pista**:
+en una pregunta de opción múltiple, el botón *Usar pista* tacha dos opciones incorrectas. Montessori también entrega
+una Pista al superarla. Las pistas se guardan en el navegador (máximo 3) y sirven en cualquier mundo.
 
 Al final del Mundo 1, Pestalozzi plantea tres preguntas. Con dos aciertos se obtiene el **Sello de Yverdon**
 y se puede llegar a la meta. La pantalla final muestra puntaje, aciertos por autor y un **código de
@@ -58,7 +65,7 @@ Las preguntas están en `datos/preguntas.csv`, que se abre con Excel o Google Sh
 | --- | --- |
 | `mundo` | Número de mundo (1 a 6) |
 | `tipo` | `opcion_multiple`, `verdadero_falso`, `quien_lo_dijo` o `relacionar` |
-| `autor` | `concepto`, `comenio`, `rousseau`, `pestalozzi`, `froebel`, `montessori`, `makarenko`, `freire`, `meirieu` o `mclaren` |
+| `autor` | `concepto`, `comenio`, `rousseau`, `pestalozzi`, `froebel`, `montessori`, `dewey`, `decroly`, `freinet`, `makarenko`, `freire`, `meirieu` o `mclaren` |
 | `pregunta` | Texto de la pregunta |
 | `opcion_a` … `opcion_d` | Opciones de respuesta. En verdadero o falso, solo A y B |
 | `correcta` | Letra de la opción correcta (A, B, C o D) |
