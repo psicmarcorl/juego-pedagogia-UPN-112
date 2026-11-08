@@ -13,11 +13,8 @@ breve y su fuente. Equivocarse en una pregunta nunca quita vidas: la pregunta vu
 | --- | --- | --- | --- |
 | 1 | Los Alpes de Pestalozzi | Pestalozzi (con Comenio, Rousseau y Fröbel) | **Jugable** |
 | 2 | La Casa de los Niños (Roma, 1907) | Montessori (con Dewey, Decroly y Freinet) | **Jugable** |
-| 3 | La Colonia Gorki | Makarenko | Pendiente |
-| 4 | Los Círculos de Cultura | Freire | Pendiente |
-| 5 | El Taller de Frankenstein | Meirieu | Pendiente |
-| 6 | La Ciudad Crítica | McLaren | Pendiente |
-| Extra | El Valle de México | Por definir | Pendiente |
+| 3 | La Colonia Gorki (Ucrania, 1920) | Makarenko (con Vygotsky, Krupskaya y Pistrak) | **Jugable** · último mundo |
+| Final | La Gran Máquina Bancaria | Jefe final | En diseño |
 
 ## Cómo jugar
 
@@ -30,6 +27,11 @@ breve y su fuente. Equivocarse en una pregunta nunca quita vidas: la pregunta vu
 En celular o tableta aparecen botones en pantalla. Se juega mejor con el teléfono en horizontal.
 
 En la pantalla de inicio se elige el mundo. Al terminar uno, el botón **Siguiente mundo** lleva al que sigue.
+
+**Mundo 3.** Ale cruza los campos de la Colonia Gorki, el río Kolomak y el patio de la colonia. Tres **colonos**
+sentados en el camino se unen a ella al tocarlos y la siguen en fila: si un obstáculo la golpea, un compañero recibe el
+golpe. El río se cruza saltando entre **balsas** que se mueven. Al superar a Makarenko se obtiene el poder **Colectivo**:
+un compañero acompaña a Ale desde el inicio de cada mundo (se guarda en el navegador).
 
 **Mundo 2.** Ale recorre una calle de San Lorenzo y entra al aula de la Casa dei Bambini. Algunas cajas de material,
 al responder bien, despliegan una **escalera café** hacia una zona alta. Allí hay un **cubo rosa** que da una **Pista**:
@@ -65,7 +67,7 @@ Las preguntas están en `datos/preguntas.csv`, que se abre con Excel o Google Sh
 | --- | --- |
 | `mundo` | Número de mundo (1 a 6) |
 | `tipo` | `opcion_multiple`, `verdadero_falso`, `quien_lo_dijo` o `relacionar` |
-| `autor` | `concepto`, `comenio`, `rousseau`, `pestalozzi`, `froebel`, `montessori`, `dewey`, `decroly`, `freinet`, `makarenko`, `freire`, `meirieu` o `mclaren` |
+| `autor` | `concepto`, `comenio`, `rousseau`, `pestalozzi`, `froebel`, `montessori`, `dewey`, `decroly`, `freinet`, `makarenko`, `vygotsky`, `krupskaya` o `pistrak` |
 | `pregunta` | Texto de la pregunta |
 | `opcion_a` … `opcion_d` | Opciones de respuesta. En verdadero o falso, solo A y B |
 | `correcta` | Letra de la opción correcta (A, B, C o D) |

@@ -42,7 +42,7 @@ const Interfaz = (() => {
           <tr><th>Pausa</th><td>P o Esc</td></tr>
           <tr><th>Responder</th><td>Clic, toque o teclas 1 a 4</td></tr>
         </tbody></table>
-        <p class="nota">Cada mundo tiene 12 preguntas. Mundo 1: Comenio, Rousseau, Pestalozzi y Fröbel. Mundo 2: Montessori, Dewey, Decroly, Freinet y la Escuela Nueva.</p>
+        <p class="nota">Cada mundo tiene 12 preguntas. Mundo 1: Comenio, Rousseau, Pestalozzi y Fröbel. Mundo 2: Montessori, Dewey, Decroly, Freinet y la Escuela Nueva. Mundo 3: Makarenko, Vygotsky, Krupskaya y Pistrak.</p>
         <button class="btn" type="submit">COMENZAR ▶</button>
       </form>`);
       const f = capa.querySelector('#f-inicio');

@@ -5,7 +5,7 @@
   const SOLIDOS = new Set(['G', 'B', '=', '?', 'g', 'h', 'e', 'U', 'T', 'C']);
   const BLOQUES_PREGUNTA = new Set(['?', 'g', 'h', 'e']);
   // Tamaño de la caja de choque de cada obstáculo según su dibujo
-  const DIM = { cerdo: [14, 10], pupitre: [16, 11], loro: [12, 12], medalla: [12, 12], regla: [8, 16], reloj: [12, 16] };
+  const DIM = { cerdo: [14, 10], pupitre: [16, 11], loro: [12, 12], medalla: [12, 12], regla: [8, 16], reloj: [12, 16], rodadora: [13, 13], cuervo: [14, 11], espanta: [12, 18] };
   const ENEMIGOS = new Set(['cerdo', 'loro', 'regla']);
   const lienzo = document.getElementById('lienzo');
   const ctx = lienzo.getContext('2d');
@@ -82,12 +82,17 @@
   function sumarPista() { pistas = Math.min(3, pistas + 1); guardarPistas(); }
   function usarPista() { pistas = Math.max(0, pistas - 1); guardarPistas(); }
 
+  // Colectivo (poder de Makarenko): un compañero acompaña a Ale desde el inicio de cada mundo
+  let colectivo = false;
+  try { colectivo = localStorage.getItem('sds-colectivo') === '1'; } catch (e) { /* sin almacenamiento */ }
+  function ganarColectivo() { colectivo = true; try { localStorage.setItem('sds-colectivo', '1'); } catch (e) { /* sin almacenamiento */ } }
+
   function nuevoJuego(n) {
     nivel = Niveles.crear(n || nivel.mundo);
     J = {
       mapa: nivel.mapa.map(r => r.slice()), W: nivel.ancho, H: nivel.alto,
       ent: [], items: [], proy: [], part: [], golpes: [], crece: [],
-      puntos: 0, ideas: 0, animo: 3, maxAnimo: 5, gis: false,
+      puntos: 0, ideas: 0, animo: 3, maxAnimo: 5, gis: false, compas: colectivo ? 1 : 0, estela: [], balsas: [],
       mentorHecho: false, mentorEnCurso: false, completo: false, frames: 0, cam: 0
     };
     // Ale mide un bloque y medio de alto (22 unidades) con el estilo nuevo.
@@ -95,6 +100,7 @@
     J.checkpoint = { x: nivel.inicio.x * T + 3, y: y0 };
     J.jug = { x: J.checkpoint.x, y: y0, w: 10, h: ALTO_ALE, vx: 0, vy: 0, suelo: false, dir: 1, coyote: 0, buffer: 0, inv: 0, anim: 0 };
     nivel.entidades.forEach(d => J.ent.push(crearEntidad(d)));
+    J.balsas = J.ent.filter(e => e.tipo === 'balsa');
     Preguntas.reiniciar();
   }
 
@@ -109,6 +115,10 @@
         return { tipo: 'regla', arte, x: px + (16 - w) / 2, y: base - h, w, h, vx: 0, vy: 0, espera: 60, vivo: true, activo: false };
       }
       case 'bandera': return { tipo: 'bandera', x: px + 6, y: base - 32, tomada: false };
+      case 'letrero': return { tipo: 'letrero', x: px, y: base, texto: d.texto };
+      case 'colono': return { tipo: 'colono', x: px + 3, y: base - 14, w: 10, h: 14, unido: false };
+      case 'fila': return { tipo: 'fila', x: px + 8, y: base };
+      case 'balsa': return { tipo: 'balsa', x0: px - 24, x: px - 24, y: base - 2, w: 48, h: 6, amp: 24, fase: d.fase || 0, dx: 0 };
       case 'mentor': return { tipo: 'mentor', x: px + 2, y: base - 16, w: 12, h: 16, autor: d.autor };
       case 'meta': return { tipo: 'meta', x: px + 6, y: base - 56 };
       default: return { tipo: 'nada' };
@@ -163,8 +173,13 @@
   }
 
   // ---------- Jugadora ----------
+  function moverBalsas() {
+    J.balsas.forEach(b => { const nx = b.x0 + Math.sin(J.frames * 0.018 + b.fase) * b.amp; b.dx = nx - b.x; b.x = nx; });
+  }
   function actualizarJugadora() {
     const p = J.jug, E = Entrada;
+    if (p.balsa) p.x += p.balsa.dx;
+    p.balsa = null;
     const acel = p.suelo ? 0.3 : 0.2, max = 2.0;
     if (E.izq && !E.der) { p.vx = Math.max(p.vx - acel, -max); p.dir = -1; }
     else if (E.der && !E.izq) { p.vx = Math.min(p.vx + acel, max); p.dir = 1; }
@@ -179,8 +194,16 @@
     moverX(p);
     const m = J.ent.find(e => e.tipo === 'mentor');
     if (m && !J.mentorHecho && p.x + p.w > m.x - 6) { p.x = m.x - 6 - p.w; if (p.vx > 0) p.vx = 0; }
+    const pieAntes = p.y + p.h;
     const golpe = moverY(p);
     if (golpe) golpearCabeza(golpe);
+    if (!p.suelo && p.vy >= 0) for (const b of J.balsas) {
+      if (pieAntes <= b.y + 1 && p.y + p.h >= b.y && p.x + p.w > b.x + 2 && p.x < b.x + b.w - 2) { p.y = b.y - p.h; p.vy = 0; p.suelo = true; p.balsa = b; break; }
+    }
+    // Rastro para que los compañeros sigan a Ale
+    const ult = J.estela[0], cx = p.x + p.w / 2, cy = p.y + p.h;
+    if (!ult || Math.abs(ult.x - cx) + Math.abs(ult.y - cy) > 1) { J.estela.unshift({ x: cx, y: cy, dir: p.dir, suelo: p.suelo }); if (J.estela.length > 90) J.estela.pop(); }
+    J.quieta = Math.abs(p.vx) < 0.2 && p.suelo;
 
     if (E.pulsos.gis && J.gis && J.proy.length < 2) {
       J.proy.push({ x: p.dir > 0 ? p.x + p.w : p.x - 4, y: p.y + 5, w: 4, h: 4, vx: p.dir * 3.6, vy: -1.2, vida: 110, rebotes: 0 });
@@ -238,6 +261,11 @@
   function danar() {
     const p = J.jug;
     if (p.inv > 0) return;
+    if (J.compas > 0) {
+      J.compas--; p.inv = 100; Sonido.reproducir('pisar'); polvo(p.x, p.y + 8);
+      textoFlotante('¡TE CUBRO!', p.x - 18, p.y - 12, '#FFE6B0');
+      return;
+    }
     if (J.gis) J.gis = false; else J.animo--;
     p.inv = 100; Sonido.reproducir('dano');
     if (J.animo <= 0) perder();
@@ -318,6 +346,10 @@
 
     // Punto de control, mentor y meta
     J.ent.forEach(e => {
+      if (e.tipo === 'colono' && !e.unido && cruza(p, e)) {
+        e.unido = true; J.compas = Math.min(5, J.compas + 1); Sonido.reproducir('poder');
+        textoFlotante('¡ME UNO!', e.x - 10, e.y - 10, '#FFE6B0');
+      }
       if (e.tipo === 'bandera' && !e.tomada && p.x > e.x) {
         e.tomada = true; J.checkpoint = { x: e.x, y: (8 + 1) * T + OFFY - ALTO_ALE };
         Sonido.reproducir('foco'); textoFlotante('PUNTO DE CONTROL', e.x - 56, e.y - 12, '#FFD977');
@@ -360,7 +392,9 @@
       }
       if (ok >= 2) {
         J.mentorHecho = true; Sonido.reproducir('poder');
-        if (nivel.poder === 'pista') sumarPista(); else J.animo = Math.min(J.maxAnimo, J.animo + 1);
+        if (nivel.poder === 'pista') sumarPista();
+        else if (nivel.poder === 'colectivo') { ganarColectivo(); J.compas = Math.min(5, J.compas + 1); }
+        else J.animo = Math.min(J.maxAnimo, J.animo + 1);
         await Interfaz.dialogo({ autor: m.autor, etiqueta: 'ENCUENTRO CON EL MENTOR', titulo: '¡Muy bien!', texto: tx.exito(ok) });
         break;
       }
@@ -430,6 +464,16 @@
   // Elige la imagen de cada bloque según el mundo (y, en Roma, si es la calle o el aula)
   function nombreTile(c, tx, ty) {
     const roma = nivel.tema === 'roma', dentro = Sprites.esInterior(nivel, tx);
+    if (nivel.tema === 'ucrania') {
+      const plat = x => x >= 0 && x < J.W && J.mapa[ty][x] === '=';
+      if (c === 'G') return 'camino' + ((ty > 0 && J.mapa[ty - 1][tx] === 'G') ? 'B' : 'A') + (tx % 4);
+      if (c === 'W') return (ty > 0 && J.mapa[ty - 1][tx] === 'W') ? 'aguaB' : 'aguaA';
+      if (c === 'B') return tx >= nivel.patioDesde ? 'lena' : 'paca';
+      if (c === '=') { const i = plat(tx - 1), d = plat(tx + 1); return 'tablon' + (i && d ? 'M' : (!i && d ? 'I' : (i && !d ? 'D' : 'S'))); }
+      if (BLOQUES_PREGUNTA.has(c)) return 'troncoQ';
+      if (c === 'U') return 'troncoU';
+      return null;
+    }
     const plat = x => x >= 0 && x < J.W && J.mapa[ty][x] === '=';
     if (c === 'G') {
       const arriba = !(ty > 0 && J.mapa[ty - 1][tx] === 'G');
@@ -482,6 +526,11 @@
       if (e.tipo === 'cerdo' && e.vivo) S.dibujar(ctx, e.arte + (Math.floor(reloj / 7) % 4), x + e.w / 2, e.y + e.h, e.vx > 0);
       else if (e.tipo === 'loro' && e.vivo) S.dibujar(ctx, e.arte + (Math.floor(reloj / 6) % 4), x + e.w / 2, e.y + e.h / 2, e.dir > 0);
       else if (e.tipo === 'regla' && e.vivo) S.dibujar(ctx, e.arte === 'reloj' ? 'reloj' + (e.vy < 0 || (e.suelo && e.espera < 20) ? Math.floor(reloj / 4) % 2 : 0) : 'regla', x + e.w / 2, e.y + e.h);
+      else if (e.tipo === 'balsa') S.dibujar(ctx, 'balsa', x, e.y);
+      else if (e.tipo === 'letrero') S.dibujar(ctx, 'letrero_' + e.texto, x + 6, e.y);
+      else if (e.tipo === 'colono' && !e.unido) { S.dibujar(ctx, 'colono_quieto' + (Math.floor(reloj / 16) % 4), x + e.w / 2, e.y + e.h); S.globo(ctx, x - 10, e.y - 22 + Math.sin(reloj * 0.1) * 1.2, '¡Hola!', 1); }
+      else if (e.tipo === 'fila') S.dibujar(ctx, 'colono_quieto' + (Math.floor(reloj / 16 + e.x) % 4), x, e.y, true);
+      else if (e.tipo === 'bandera' && nivel.tema === 'ucrania') S.dibujar(ctx, 'letrero_media', x, e.y + 32);
       else if (e.tipo === 'bandera') {
         if (nivel.tema === 'roma') S.dibujar(ctx, 'portal', x + 2, e.y + 32);
         else S.bandera(ctx, x, e.y, e.tomada);
@@ -499,6 +548,12 @@
     J.proy.forEach(g => S.proyectil(ctx, g.x - cam, g.y));
 
     const p = J.jug;
+    for (let i = J.compas; i >= 1; i--) {
+      const r = J.estela[Math.min(J.estela.length - 1, i * 9)];
+      if (!r) continue;
+      const clave = !r.suelo ? 'colono_salto' : (!J.quieta ? 'colono_camina' + (Math.floor(reloj / 5 + i) % 8) : 'colono_quieto' + (Math.floor(reloj / 16 + i) % 4));
+      S.dibujar(ctx, clave, r.x - cam, r.y, r.dir < 0);
+    }
     if (!(p.inv > 0 && Math.floor(p.inv / 4) % 2)) {
       const clave = !p.suelo ? 'ale_salto'
         : (Math.abs(p.vx) > 0.2 ? 'ale_camina' + (Math.floor(p.anim / 4) % 8) : 'ale_quieto' + (Math.floor(reloj / 16) % 4));
@@ -510,7 +565,7 @@
       else if (q.tipo === 'foco') S.dibujar(ctx, 'foco', q.x - cam + 4, q.y + 5);
       else S.polvo(ctx, q.x - cam, q.y, Math.min(1, q.vida / 12));
     });
-    S.hud(ctx, { animo: J.animo, ideas: J.ideas, gis: J.gis, pistas, puntos: J.puntos, mundo: 'MUNDO ' + nivel.id, nombre: nivel.nombre });
+    S.hud(ctx, { animo: J.animo, ideas: J.ideas, gis: J.gis, pistas, compas: J.compas, puntos: J.puntos, mundo: 'MUNDO ' + nivel.id, nombre: nivel.nombre });
   }
 
   // ---------- Bucle principal ----------
@@ -518,6 +573,7 @@
     reloj++;
     if (J && estado === 'jugando') {
       J.frames++;
+      moverBalsas();
       actualizarJugadora();
       if (estado === 'jugando' || estado === 'pregunta' || estado === 'mentor') actualizarEntidades();
       J.cam = Math.max(0, Math.min(J.W * T - VW, Math.round(J.jug.x + J.jug.w / 2 - 140)));

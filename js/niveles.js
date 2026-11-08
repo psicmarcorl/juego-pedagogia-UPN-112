@@ -132,9 +132,69 @@ const Niveles = (() => {
     };
   }
 
+  // W agua del río (se cae como en un hoyo) · balsa: plataforma que se mueve · colono: compañero que se une a Ale
+  function mundo3() {
+    const W = 202, { g, H, put, fila, torre } = base(W), ent = [];
+    fila(74, 99, 9, 'W'); fila(74, 99, 10, 'W');
+
+    // Tramo 1: los campos
+    put(8, 5, '?');
+    put(12, 5, 'B'); put(13, 5, '?'); put(14, 5, 'B');
+    ent.push({ tipo: 'colono', x: 17, y: 8 });
+    ent.push({ tipo: 'cerdo', x: 21, y: 8 });
+    fila(23, 26, 6, '='); fila(23, 26, 5, 'o');
+    torre(29, 7);
+    ent.push({ tipo: 'regla', x: 33, y: 8 });
+    ent.push({ tipo: 'letrero', x: 36, y: 8, texto: 'cercana' });
+    put(40, 5, 'B'); put(41, 5, 'h'); put(42, 5, 'B');
+    ent.push({ tipo: 'loro', x: 46, y: 3 });
+    torre(50, 8); torre(51, 7); torre(52, 6); torre(53, 5);
+    fila(54, 57, 5, '='); fila(54, 56, 3, 'o');
+    ent.push({ tipo: 'colono', x: 57, y: 4 });
+    ent.push({ tipo: 'cerdo', x: 61, y: 8 }); ent.push({ tipo: 'cerdo', x: 64, y: 8 });
+    fila(66, 69, 6, '='); put(67, 2, '?');
+    // Tramo 2: el río Kolomak, con balsas que van y vienen
+    [78, 84, 90, 96].forEach((x, i) => ent.push({ tipo: 'balsa', x, y: 8, fase: i * 0.6 }));
+    [80, 86, 92].forEach(x => put(x, 6, 'o'));
+    ent.push({ tipo: 'loro', x: 87, y: 3 });
+    ent.push({ tipo: 'bandera', x: 102, y: 8 });                      // letrero de la perspectiva media
+    ent.push({ tipo: 'colono', x: 106, y: 8 });
+    // Tramo 3: el patio de la colonia
+    torre(110, 8); torre(111, 7); torre(112, 6);
+    fila(116, 119, 6, '='); put(117, 2, '?'); fila(116, 119, 5, 'o');
+    ent.push({ tipo: 'regla', x: 122, y: 8 });
+    put(126, 5, 'B'); put(127, 5, '?'); put(128, 5, 'B');
+    ent.push({ tipo: 'cerdo', x: 132, y: 8 }); ent.push({ tipo: 'loro', x: 136, y: 3 });
+    torre(140, 8); torre(141, 7); torre(142, 6); torre(143, 6); torre(144, 7); torre(145, 8);
+    fila(150, 153, 6, '='); put(151, 2, '?'); fila(150, 153, 5, 'o');
+    ent.push({ tipo: 'regla', x: 157, y: 8 }); ent.push({ tipo: 'cerdo', x: 161, y: 8 });
+    put(165, 5, 'B'); put(166, 5, '?'); put(167, 5, 'B');
+    fila(171, 175, 7, 'o');
+    ent.push({ tipo: 'letrero', x: 177, y: 8, texto: 'lejana' });
+    [182, 183, 184].forEach(x => ent.push({ tipo: 'fila', x, y: 8 }));   // destacamento formado
+    ent.push({ tipo: 'mentor', x: 188, y: 8, autor: 'makarenko' });
+    ent.push({ tipo: 'meta', x: 196, y: 8 });
+
+    return {
+      id: '3-1', mundo: 3, nombre: 'La Colonia Gorki', tema: 'ucrania', mentor: 'makarenko', ultimo: true,
+      ancho: W, alto: H, mapa: g, entidades: ent, inicio: { x: 3, y: 8 }, patioDesde: 104, escaleras: [],
+      enemigos: { cerdo: 'rodadora', loro: 'cuervo', regla: 'espanta' },
+      decor: [{ img: 'jata', x: 200, y: 106 }, { img: 'jata', x: 640, y: 106 }, { img: 'tallerColonia', x: 1120, y: 98 }, { img: 'tallerCarpinteria', x: 1430, y: 107 }, { img: 'tallerColonia', x: 1740, y: 98 }],
+      sello: 'Sello de Poltava', poder: 'colectivo',
+      textos: {
+        intro: '<p>Ucrania, 1920, cerca de Poltava. Antón Makarenko recibe a niños y jóvenes que la guerra dejó sin hogar y, con ellos, levanta la <b>Colonia Gorki</b>. En este mundo conocerás también a <b>Vygotsky, Krupskaya y Pistrak</b>.</p><p>En el camino hay <b>tres colonos</b> sentados solos: tócalos y se unirán a ti. Si un obstáculo te golpea, un compañero recibe el golpe por ti.</p><p>Para cruzar el <b>río Kolomak</b>, salta entre las balsas. Cuidado con la rodadora del desorden, el cuervo egoísta y el espantapájaros de la apatía.</p>',
+        mentorNombre: 'Antón Makarenko', mentorCorto: 'Makarenko',
+        saludo: '<p>Bienvenida a la colonia, Ale. Soy Antón Makarenko. Aquí nadie se educa solo: el <b>colectivo</b> trabaja, decide y se cuida a sí mismo.</p><p>Respóndeme tres preguntas. Con dos aciertos obtendrás el <b>Sello de Poltava</b>.</p>',
+        exito: ok => `<p>Acertaste <b>${ok} de 3</b>. Te entrego el <b>Sello de Poltava</b> y el poder <b>Colectivo</b>: un compañero te acompañará desde el inicio de cada mundo.</p><p>El banderín está justo detrás de mí.</p>`,
+        reintento: REINTENTO
+      }
+    };
+  }
+
   const lista = [
     { n: 1, nombre: 'Los Alpes de Pestalozzi', crear: mundo1 },
-    { n: 2, nombre: 'La Casa de los Niños', crear: mundo2 }
+    { n: 2, nombre: 'La Casa de los Niños', crear: mundo2 },
+    { n: 3, nombre: 'La Colonia Gorki', crear: mundo3 }
   ];
-  return { lista, crear: n => (lista.find(m => m.n === n) || lista[0]).crear(), existe: n => lista.some(m => m.n === n), mundo1, mundo2 };
+  return { lista, crear: n => (lista.find(m => m.n === n) || lista[0]).crear(), existe: n => lista.some(m => m.n === n), mundo1, mundo2, mundo3 };
 })();
