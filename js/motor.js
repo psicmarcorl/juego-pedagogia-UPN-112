@@ -118,6 +118,7 @@
       case 'letrero': return { tipo: 'letrero', x: px, y: base, texto: d.texto };
       case 'colono': return { tipo: 'colono', x: px + 3, y: base - 14, w: 10, h: 14, unido: false };
       case 'fila': return { tipo: 'fila', x: px + 8, y: base };
+      case 'animador': return { tipo: 'animador', x: px + 8, y: base, autor: d.autor };
       case 'balsa': return { tipo: 'balsa', x0: px - 24, x: px - 24, y: base - 2, w: 48, h: 6, amp: 24, fase: d.fase || 0, dx: 0 };
       case 'mentor': return { tipo: 'mentor', x: px + 2, y: base - 16, w: 12, h: 16, autor: d.autor };
       case 'meta': return { tipo: 'meta', x: px + 6, y: base - 56 };
@@ -355,7 +356,7 @@
         Sonido.reproducir('foco'); textoFlotante('PUNTO DE CONTROL', e.x - 56, e.y - 12, '#FFD977');
       }
       if (e.tipo === 'mentor' && !J.mentorHecho && !J.mentorEnCurso && p.suelo && p.x + p.w >= e.x - 8) encuentroMentor(e);
-      if (e.tipo === 'meta' && J.mentorHecho && !J.completo && p.x + p.w >= e.x) completar();
+      if (e.tipo === 'meta' && J.mentorHecho && !J.completo && p.x + p.w >= e.x) { if (nivel.jefe && !J.jefeHecho) iniciarJefe(); else completar(); }
     });
 
     J.golpes.forEach(b => b.t--); J.golpes = J.golpes.filter(b => b.t > 0);
@@ -422,20 +423,141 @@
     d.codigo = codigo([d.nombre, d.grupo, d.puntos, d.ok, d.total, d.fecha, 'SDS-M' + nivel.mundo].join('|'));
     return d;
   }
+  // ---------- Resultados guardados por mundo (para la constancia final) ----------
+  function leerResultados() { try { return JSON.parse(localStorage.getItem('sds-resultados') || '{}'); } catch (e) { return {}; } }
+  function guardarResultado(d) {
+    const r = leerResultados();
+    r[d.mundo] = { puntos: d.puntos, ok: d.ok, total: d.total, fecha: d.fecha, nombre: d.nombre };
+    try { localStorage.setItem('sds-resultados', JSON.stringify(r)); } catch (e) { /* sin almacenamiento */ }
+  }
+  function datosConstancia() {
+    const r = leerResultados();
+    const mundos = Niveles.lista.map(m => { const nv = Niveles.crear(m.n); return { n: m.n, nombre: m.nombre, sello: nv.sello, r: r[m.n] || null }; });
+    const total = mundos.reduce((a, m) => a + (m.r ? m.r.puntos : 0), 0);
+    const fecha = new Date().toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
+    const nombre = opciones.nombre || 'Estudiante';
+    return { nombre, grupo: opciones.grupo, mundos, total, fecha, completo: mundos.every(m => m.r),
+      codigo: codigo([nombre, opciones.grupo, total, mundos.map(m => m.r ? m.r.ok + '/' + m.r.total : '-').join(','), fecha, 'SDS-FINAL'].join('|')) };
+  }
+  function volverAlInicio() { Interfaz.cerrar(); J = null; Entrada.limpiar(); estado = 'titulo'; }
+
+  // ---------- Jefe final: la Gran Máquina Bancaria ----------
+  const COLORES_CANDADO = ['pestalozzi', 'montessori', 'makarenko'];
+  function cajaJefe(B) { return { x: B.x + 10, y: B.y - 86, w: 68, h: 86 }; }
+  async function iniciarJefe() {
+    estado = 'mentor'; Entrada.limpiar();
+    await Interfaz.dialogo({ autor: 'makarenko', etiqueta: '¡CUIDADO!', titulo: 'Algo sale del almacén', texto: nivel.textos.jefeIntro, boton: '¡A ENFRENTARLA! ▶' });
+    Interfaz.cerrar();
+    const A = Niveles.arena();
+    J.mapa = A.mapa.map(r => r.slice()); J.W = A.ancho; J.H = A.alto;
+    J.ent = A.entidades.map(crearEntidad); J.balsas = []; J.items = []; J.proy = []; J.part = []; J.golpes = []; J.crece = []; J.estela = []; J.ataques = [];
+    J.arena = true; J.cam = 0; J.gis = true;
+    const p = J.jug; p.x = 40; p.y = (8 + 1) * T + OFFY - p.h; p.vx = 0; p.vy = 0; p.inv = 60; p.dir = 1;
+    J.checkpoint = { x: 40, y: p.y };
+    J.jefe = { x: 220, y: (8 + 1) * T + OFFY, dir: -1, modo: 'camina', abiertos: 0, ataque: null, aviso: 0, post: 0, sig: 120, n: 0, golpesGis: 0, aturdido: 0, t: 0, flash: 0, golpe: 0.95 };
+    textoFlotante('¡TIENES GIS! TECLA X', 20, 70, '#FFD977');
+    Entrada.limpiar(); estado = 'jugando';
+  }
+  function aturdir(B) {
+    B.modo = 'aturdida'; B.aturdido = 360; B.ataque = null; B.aviso = 0; B.post = 0; B.golpesGis = 0; B.golpe = 0.95;
+    Sonido.reproducir('golpe'); textoFlotante('¡ATURDIDA! TOCA UN CANDADO', B.x - 40, B.y - 104, '#FFD977');
+  }
+  function lanzarAtaque(B) {
+    const extra = B.abiertos;
+    if (B.ataque === 'monedas') {
+      [[-1.4, -3.4], [-2.0, -3.9], [-2.6, -2.8], [-1.1, -4.4]].slice(0, 3 + (extra > 0 ? 1 : 0)).forEach(([vx, vy]) => J.ataques.push({ tipo: 'moneda', x: B.x + 20, y: B.y - 40, w: 8, h: 8, vx: vx - extra * 0.2, vy, vida: 260, botes: 0 }));
+      Sonido.reproducir('foco');
+    } else if (B.ataque === 'regla') {
+      J.ataques.push({ tipo: 'onda', x: B.x - 12, y: B.y - 10, w: 14, h: 10, vx: -2.3 - extra * 0.3, vy: 0, vida: 240 });
+      Sonido.reproducir('golpe');
+    } else {
+      J.ataques.push({ tipo: 'grito', x: B.x - 14, y: B.y - 22, w: 14, h: 14, vx: -2.1 - extra * 0.3, vy: 0, vida: 240 });
+      textoFlotante('¡REPITE!', B.x - 10, B.y - 108, '#FFFFFF'); Sonido.reproducir('mal');
+    }
+  }
+  function actualizarJefe() {
+    const B = J.jefe, p = J.jug;
+    B.t++; if (B.flash > 0) B.flash--;
+    // Ataques en vuelo
+    J.ataques.forEach(a => {
+      a.vida--; a.x += a.vx;
+      if (a.tipo === 'moneda') { a.vy += 0.16; a.y += a.vy; if (a.y + a.h >= (8 + 1) * T + OFFY) { a.y = (8 + 1) * T + OFFY - a.h; a.vy *= -0.45; a.vx *= 0.7; if (++a.botes > 2) a.vida = 0; } }
+      if (a.tipo === 'grito' && solido(Math.floor((a.x + a.w / 2) / T), filaDe(a.y + a.h / 2))) { a.vida = 0; polvo(a.x, a.y + 6); }
+      if (a.x < -20) a.vida = 0;
+      if (a.vida > 0 && p.inv === 0 && cruza(p, a)) { a.vida = 0; danar(); }
+    });
+    J.ataques = J.ataques.filter(a => a.vida > 0);
+    if (B.modo === 'rota') return;
+    const hb = cajaJefe(B);
+    if (B.modo === 'aturdida') {
+      if (--B.aturdido <= 0) { B.modo = 'camina'; B.sig = 60; }
+      else if (estado === 'jugando' && cruza(p, hb)) abrirCandado(B);
+      return;
+    }
+    if (B.modo === 'golpeada') { if (--B.aturdido <= 0) { B.modo = 'camina'; B.sig = 70; } return; }
+    // Camina y ataca
+    if (!B.ataque) {
+      B.x += B.dir * [0.45, 0.6, 0.75][B.abiertos];
+      if (B.x < 128) { B.x = 128; B.dir = 1; } if (B.x > 222) { B.x = 222; B.dir = -1; }
+      if (--B.sig <= 0) { B.ataque = ['monedas', 'regla', 'loro'][B.n++ % 3]; B.aviso = 45; }
+    } else if (B.aviso > 0) {
+      B.aviso--;
+      if (B.ataque === 'regla') B.golpe = 0.95 + (45 - B.aviso) / 45 * 1.5;
+      if (B.aviso === 0) { lanzarAtaque(B); B.post = 30; if (B.ataque === 'regla') B.golpe = 0.6; }
+    } else if (--B.post <= 0) { B.ataque = null; B.golpe = 0.95; B.sig = [170, 140, 110][B.abiertos]; }
+    // Contacto: salto encima = aturdir; de lado = golpe a Ale
+    if (p.inv === 0 && cruza(p, hb)) {
+      if (p.vy > 0 && p.y + p.h - hb.y < 14) { aturdir(B); p.vy = -6; Sonido.reproducir('pisar'); }
+      else { danar(); p.vx = -3; p.x = Math.max(0, p.x - 8); }
+    }
+    // Gis: tres impactos la aturden
+    J.proy.forEach(g => { if (g.vida > 0 && cruza(g, hb)) { g.vida = 0; B.flash = 10; B.golpesGis++; Sonido.reproducir('golpe'); if (B.golpesGis >= 3) aturdir(B); } });
+  }
+  function abrirCandado(B) {
+    estado = 'pregunta'; Entrada.limpiar();
+    const n = B.abiertos + 1, q = Preguntas.deMundo(n);
+    Preguntas.mostrar(q, { etiqueta: `CANDADO ${n} DE 3 · MUNDO ${n}`, premio: 'abrir el candado ' + n + '.', tiempo: opciones.tiempo, mentor: COLORES_CANDADO[n - 1], pistas, usarPista }).then(ok => {
+      Interfaz.cerrar(); Entrada.limpiar();
+      const p = J.jug; p.x = Math.max(8, B.x - 40); p.vx = 0; p.inv = 70;
+      if (ok) {
+        B.abiertos++; J.puntos += 1000; B.flash = 20;
+        textoFlotante('¡CANDADO ABIERTO!', B.x - 20, B.y - 104, '#FFD977');
+        if (B.abiertos >= 3) romperJefe(B); else { B.modo = 'golpeada'; B.aturdido = 50; }
+      } else { B.modo = 'camina'; B.sig = 90; }
+      estado = 'jugando';
+    });
+  }
+  function romperJefe(B) {
+    B.modo = 'rota'; J.jefeHecho = true; J.ataques = [];
+    J.puntos += 3000; sumarIdeas(20); Sonido.reproducir('meta');
+    for (let i = 0; i < 26; i++) J.part.push({ tipo: 'foco', x: B.x + 20 + Math.random() * 50, y: B.y - 60 - Math.random() * 30, vx: (Math.random() - 0.5) * 3, vy: -3 - Math.random() * 3, vida: 70 + Math.random() * 40 });
+    for (let i = 0; i < 16; i++) polvo(B.x + Math.random() * 80, B.y - Math.random() * 80);
+    setTimeout(finalDelJuego, 2600);
+  }
+  async function finalDelJuego() {
+    J.completo = true; estado = 'completo';
+    J.puntos += J.animo * 200;
+    await Interfaz.dialogo({ autor: 'makarenko', etiqueta: 'FIN DEL JUEGO', titulo: '¡Lo lograste, Ale!', texto: nivel.textos.jefeFin, boton: 'VER RESULTADOS ▶' });
+    const d = datosPartida(); guardarResultado(d);
+    Interfaz.resultados(d, reiniciarMundo, null, () => Interfaz.constancia(datosConstancia(), volverAlInicio));
+  }
+
   function completar() {
     J.completo = true; estado = 'completo';
     J.puntos += J.animo * 200;
     textoFlotante('BONO ' + J.animo * 200, J.jug.x - 20, J.jug.y - 14, '#FFD977');
     Sonido.reproducir('meta');
     const sig = nivel.mundo + 1;
-    setTimeout(() => Interfaz.resultados(datosPartida(), reiniciarMundo, Niveles.existe(sig) ? () => iniciarMundo(sig) : null), 1400);
+    setTimeout(() => { const d = datosPartida(); guardarResultado(d); Interfaz.resultados(d, reiniciarMundo, Niveles.existe(sig) ? () => iniciarMundo(sig) : null); }, 1400);
   }
   function perder() {
     estado = 'fin';
     const st = Preguntas.estadisticas;
-    setTimeout(() => Interfaz.finJuego({ ok: st.ok, total: st.total, ideas: J.ideas }, reiniciarMundo), 600);
+    setTimeout(() => Interfaz.finJuego({ ok: st.ok, total: st.total, ideas: J.ideas }, J.arena ? reintentarJefe : reiniciarMundo), 600);
   }
   function reiniciarMundo() { Interfaz.cerrar(); nuevoJuego(nivel.mundo); Entrada.limpiar(); estado = 'jugando'; }
+  // Si Ale pierde todo el ánimo durante el jefe, vuelve a intentar la pelea (no todo el mundo)
+  function reintentarJefe() { Interfaz.cerrar(); J.animo = 3; J.completo = false; J.jefeHecho = false; iniciarJefe(); }
   function pausar() {
     estado = 'pausa'; Entrada.limpiar();
     Interfaz.pausa({ continuar: reanudar, reiniciar: reiniciarMundo, sonido: Sonido.activo, alternarSonido });
@@ -493,7 +615,7 @@
   }
   function dibujarNivel(t) {
     const cam = J.cam, S = Sprites;
-    S.fondo(ctx, cam, nivel, t);
+    S.fondo(ctx, cam, J.arena ? { tema: 'arena' } : nivel, t);
 
     const tx0 = Math.max(0, Math.floor(cam / T) - 1), tx1 = Math.min(J.W - 1, tx0 + 22);
     const esSuelo = (tx, ty) => tx < 0 || tx >= J.W || J.mapa[ty][tx] === 'G';
@@ -529,6 +651,10 @@
       else if (e.tipo === 'balsa') S.dibujar(ctx, 'balsa', x, e.y);
       else if (e.tipo === 'letrero') S.dibujar(ctx, 'letrero_' + e.texto, x + 6, e.y);
       else if (e.tipo === 'colono' && !e.unido) { S.dibujar(ctx, 'colono_quieto' + (Math.floor(reloj / 16) % 4), x + e.w / 2, e.y + e.h); S.globo(ctx, x - 10, e.y - 22 + Math.sin(reloj * 0.1) * 1.2, '¡Hola!', 1); }
+      else if (e.tipo === 'animador') {
+        S.dibujar(ctx, e.autor + '_quieto' + (Math.floor(reloj / 16 + e.x) % 4), x, e.y - Math.abs(Math.sin(reloj * 0.08 + e.x)) * 2, false);
+        if (e.autor === 'montessori' && J.jefe && J.jefe.modo !== 'rota' && Math.floor(reloj / 240) % 2 === 0) S.globo(ctx, x - 14, e.y - 44, '¡Tú puedes, Ale!', 1);
+      }
       else if (e.tipo === 'fila') S.dibujar(ctx, 'colono_quieto' + (Math.floor(reloj / 16 + e.x) % 4), x, e.y, true);
       else if (e.tipo === 'bandera' && nivel.tema === 'ucrania') S.dibujar(ctx, 'letrero_media', x, e.y + 32);
       else if (e.tipo === 'bandera') {
@@ -545,6 +671,17 @@
       if (it.clase === 'gis') S.dibujar(ctx, 'gis', x + it.w / 2, it.y + it.h / 2);
       else S.dibujar(ctx, 'corazon', x + it.w / 2, it.y + it.h / 2 + 1);
     });
+    if (J.jefe && J.arena) {
+      const B = J.jefe;
+      if (B.modo === 'rota') S.jefeRoto(ctx, B.x - cam, B.y);
+      else {
+        const temblor = (B.aviso > 0 && B.ataque !== 'regla') || B.modo === 'golpeada' ? Math.sin(reloj * 1.7) * 1.4 : 0;
+        if (B.flash > 0 && Math.floor(B.flash / 3) % 2) ctx.globalAlpha = 0.55;
+        S.jefe(ctx, B.x - cam + temblor, B.y, reloj * 16, { abiertos: B.abiertos, modo: B.modo === 'aturdida' ? 'aturdida' : 'normal', golpe: B.golpe });
+        ctx.globalAlpha = 1;
+      }
+      (J.ataques || []).forEach(a => S.ataqueJefe(ctx, { tipo: a.tipo, x: a.x - cam, y: a.y, w: a.w, h: a.h }, reloj * 16));
+    }
     J.proy.forEach(g => S.proyectil(ctx, g.x - cam, g.y));
 
     const p = J.jug;
@@ -565,7 +702,8 @@
       else if (q.tipo === 'foco') S.dibujar(ctx, 'foco', q.x - cam + 4, q.y + 5);
       else S.polvo(ctx, q.x - cam, q.y, Math.min(1, q.vida / 12));
     });
-    S.hud(ctx, { animo: J.animo, ideas: J.ideas, gis: J.gis, pistas, compas: J.compas, puntos: J.puntos, mundo: 'MUNDO ' + nivel.id, nombre: nivel.nombre });
+    S.hud(ctx, { animo: J.animo, ideas: J.ideas, gis: J.gis, pistas, compas: J.compas, puntos: J.puntos, mundo: 'MUNDO ' + nivel.id, nombre: nivel.nombre, jefe: J.arena && J.jefe ? { abiertos: J.jefe.abiertos } : null });
+    if (J.jefeHecho && J.arena) S.texto(ctx, '¡LO LOGRASTE!', 160, 64, 20, '#FFD977', 'center');
   }
 
   // ---------- Bucle principal ----------
@@ -576,9 +714,11 @@
       moverBalsas();
       actualizarJugadora();
       if (estado === 'jugando' || estado === 'pregunta' || estado === 'mentor') actualizarEntidades();
+      if (J.jefe && J.arena && estado === 'jugando') actualizarJefe();
       J.cam = Math.max(0, Math.min(J.W * T - VW, Math.round(J.jug.x + J.jug.w / 2 - 140)));
     } else if (J && (estado === 'completo' || estado === 'fin')) {
       actualizarParticulas();
+      if (J.jefe && J.arena) J.jefe.t++;
     }
     Entrada.fin();
   }
@@ -622,5 +762,5 @@
   requestAnimationFrame(bucle);
 
   // Acceso para pruebas automáticas
-  window.__sds = { get estado() { return estado; }, get J() { return J; } };
+  window.__sds = { get estado() { return estado; }, get J() { return J; }, iniciarJefe: () => iniciarJefe() };
 })();

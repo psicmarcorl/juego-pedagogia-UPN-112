@@ -14,7 +14,7 @@ breve y su fuente. Equivocarse en una pregunta nunca quita vidas: la pregunta vu
 | 1 | Los Alpes de Pestalozzi | Pestalozzi (con Comenio, Rousseau y Fröbel) | **Jugable** |
 | 2 | La Casa de los Niños (Roma, 1907) | Montessori (con Dewey, Decroly y Freinet) | **Jugable** |
 | 3 | La Colonia Gorki (Ucrania, 1920) | Makarenko (con Vygotsky, Krupskaya y Pistrak) | **Jugable** · último mundo |
-| Final | La Gran Máquina Bancaria | Jefe final | En diseño |
+| Final | La Gran Máquina Bancaria | Jefe final, al terminar el Mundo 3 | **Jugable** |
 
 ## Cómo jugar
 
@@ -27,6 +27,13 @@ breve y su fuente. Equivocarse en una pregunta nunca quita vidas: la pregunta vu
 En celular o tableta aparecen botones en pantalla. Se juega mejor con el teléfono en horizontal.
 
 En la pantalla de inicio se elige el mundo. Al terminar uno, el botón **Siguiente mundo** lleva al que sigue.
+
+**Jefe final.** Al llegar a la meta del Mundo 3 aparece la **Gran Máquina Bancaria**, armada con los obstáculos de
+los tres mundos. Lanza monedas, golpea el suelo con su regla y su loro grita “¡Repite!” (la paca sirve de escudo).
+Se aturde con tres golpes de gis o saltando sobre ella desde los tablones; aturdida, al tocarla se abre uno de sus
+**tres candados** con una pregunta del Mundo 1, 2 y 3, en ese orden. Si Ale pierde todo el ánimo, solo se repite la pelea.
+Al vencerla aparece la **constancia de recorrido**: sellos, puntaje y respuestas correctas de cada mundo completado en
+ese navegador, puntaje total y un código de verificación para subir a Classroom o Teams.
 
 **Mundo 3.** Ale cruza los campos de la Colonia Gorki, el río Kolomak y el patio de la colonia. Tres **colonos**
 sentados en el camino se unen a ella al tocarlos y la siguen en fila: si un obstáculo la golpea, un compañero recibe el

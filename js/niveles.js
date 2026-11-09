@@ -176,7 +176,7 @@ const Niveles = (() => {
     ent.push({ tipo: 'meta', x: 196, y: 8 });
 
     return {
-      id: '3-1', mundo: 3, nombre: 'La Colonia Gorki', tema: 'ucrania', mentor: 'makarenko', ultimo: true,
+      id: '3-1', mundo: 3, nombre: 'La Colonia Gorki', tema: 'ucrania', mentor: 'makarenko', ultimo: true, jefe: true,
       ancho: W, alto: H, mapa: g, entidades: ent, inicio: { x: 3, y: 8 }, patioDesde: 104, escaleras: [],
       enemigos: { cerdo: 'rodadora', loro: 'cuervo', regla: 'espanta' },
       decor: [{ img: 'jata', x: 200, y: 106 }, { img: 'jata', x: 640, y: 106 }, { img: 'tallerColonia', x: 1120, y: 98 }, { img: 'tallerCarpinteria', x: 1430, y: 107 }, { img: 'tallerColonia', x: 1740, y: 98 }],
@@ -186,9 +186,20 @@ const Niveles = (() => {
         mentorNombre: 'Antón Makarenko', mentorCorto: 'Makarenko',
         saludo: '<p>Bienvenida a la colonia, Ale. Soy Antón Makarenko. Aquí nadie se educa solo: el <b>colectivo</b> trabaja, decide y se cuida a sí mismo.</p><p>Respóndeme tres preguntas. Con dos aciertos obtendrás el <b>Sello de Poltava</b>.</p>',
         exito: ok => `<p>Acertaste <b>${ok} de 3</b>. Te entrego el <b>Sello de Poltava</b> y el poder <b>Colectivo</b>: un compañero te acompañará desde el inicio de cada mundo.</p><p>El banderín está justo detrás de mí.</p>`,
-        reintento: REINTENTO
+        reintento: REINTENTO,
+        jefeIntro: '<p>¡Cuidado, Ale! Del almacén de la colonia salió una máquina enorme: la <b>Gran Máquina Bancaria</b>. Está hecha con todo lo que combatimos: pupitres clavados, reglas, relojes de la prisa, medallas y un loro que repite.</p><p>Solo “deposita” datos en la cabeza de los estudiantes, como decía Paulo Freire. Para detenerla, <b>atúrdela</b> con tres golpes de gis o saltando sobre ella desde los tablones. Luego <b>toca sus candados</b>: cada uno se abre con una pregunta de un mundo.</p><p>Escóndete detrás de la paca cuando el loro grite.</p>',
+        jefeFin: '<p>¡La máquina se desarmó! Las ideas que guardaba vuelven a quienes aprenden.</p><p>Pestalozzi, Montessori y yo te felicitamos, Ale: aprendiste con la cabeza, el corazón y la mano; con un ambiente preparado; y en colectivo.</p>'
       }
     };
+  }
+
+  // Arena del jefe final: una sola pantalla en el patio de la colonia, al atardecer
+  function arena() {
+    const W = 20, { g, H, put, fila } = base(W);
+    fila(2, 5, 6, '=');
+    put(7, 8, 'B');
+    const ent = [{ tipo: 'animador', x: 0, y: 8, autor: 'pestalozzi' }, { tipo: 'animador', x: 1, y: 8, autor: 'montessori' }, { tipo: 'animador', x: 2, y: 8, autor: 'makarenko' }];
+    return { ancho: W, alto: H, mapa: g, entidades: ent };
   }
 
   const lista = [
@@ -196,5 +207,5 @@ const Niveles = (() => {
     { n: 2, nombre: 'La Casa de los Niños', crear: mundo2 },
     { n: 3, nombre: 'La Colonia Gorki', crear: mundo3 }
   ];
-  return { lista, crear: n => (lista.find(m => m.n === n) || lista[0]).crear(), existe: n => lista.some(m => m.n === n), mundo1, mundo2, mundo3 };
+  return { lista, crear: n => (lista.find(m => m.n === n) || lista[0]).crear(), existe: n => lista.some(m => m.n === n), arena, mundo1, mundo2, mundo3 };
 })();

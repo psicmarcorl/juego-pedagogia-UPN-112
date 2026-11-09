@@ -23,7 +23,8 @@ const Preguntas = (() => {
     mclaren:    { nombre: 'Peter McLaren', corto: 'McLaren' }
   };
 
-  let todas = [], cola = [], stats = null;
+  let todas = [], cola = [], stats = null, listaCompleta = [];
+  const usadasJefe = new Set();
 
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const normal = s => String(s || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '_');
@@ -89,6 +90,7 @@ const Preguntas = (() => {
     if (!lista.some(q => q.mundo === mundo) && typeof PREGUNTAS_RESPALDO === 'string') {
       lista = convertir(leerCSV(PREGUNTAS_RESPALDO)); origen = 'respaldo';
     }
+    listaCompleta = lista;
     todas = lista.filter(q => q.mundo === mundo);
     reiniciar();
     return { total: todas.length, origen };
@@ -114,6 +116,15 @@ const Preguntas = (() => {
     const a = stats.porAutor[q.autor] || (stats.porAutor[q.autor] = { ok: 0, total: 0 });
     a.total++; if (ok) a.ok++;
     if (!ok) cola.push(q);
+  }
+
+  // Pregunta al azar de un mundo (la usa el jefe final para cada candado)
+  function deMundo(n) {
+    let pool = listaCompleta.filter(q => q.mundo === n && !usadasJefe.has(q));
+    if (!pool.length) { listaCompleta.filter(q => q.mundo === n).forEach(q => usadasJefe.delete(q)); pool = listaCompleta.filter(q => q.mundo === n); }
+    const q = pool[Math.floor(Math.random() * pool.length)];
+    if (q) usadasJefe.add(q);
+    return q;
   }
 
   function nombreAutor(clave) { return (AUTORES[clave] || { corto: clave }).corto; }
@@ -207,6 +218,6 @@ const Preguntas = (() => {
     });
   }
 
-  return { cargar, reiniciar, siguiente, mostrar, nombreAutor, AUTORES, esc,
+  return { cargar, reiniciar, siguiente, deMundo, mostrar, nombreAutor, AUTORES, esc,
     get estadisticas() { return stats; }, get total() { return todas.length; } };
 })();

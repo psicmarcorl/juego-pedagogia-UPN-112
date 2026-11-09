@@ -95,7 +95,7 @@ const Interfaz = (() => {
     setTimeout(() => capa.querySelector('#b-rep').focus(), 320);
   }
 
-  function resultados(d, repetir, siguiente) {
+  function resultados(d, repetir, siguiente, constancia) {
     abrir(`<div class="panel ancho" role="dialog" aria-modal="true" aria-labelledby="r-titulo" tabindex="-1">
       <div class="resultado ok" id="r-titulo">¡MUNDO ${d.mundo} COMPLETADO!</div>
       <p>Obtuviste el <b>${esc(d.sello)}</b> de ${esc(d.mentor)}.</p>
@@ -114,13 +114,39 @@ const Interfaz = (() => {
       <p class="nota">Si tu docente lo solicita, toma una captura de esta pantalla y súbela a Classroom o Teams.</p>
       <div class="botones">
         ${siguiente ? '<button type="button" class="btn" id="b-sig">SIGUIENTE MUNDO ▶</button>' : ''}
-        <button type="button" class="btn ${siguiente ? 'sec' : ''}" id="b-rep">JUGAR DE NUEVO</button>
+        ${constancia ? '<button type="button" class="btn" id="b-const">VER CONSTANCIA FINAL ▶</button>' : ''}
+        <button type="button" class="btn ${siguiente || constancia ? 'sec' : ''}" id="b-rep">JUGAR DE NUEVO</button>
       </div>
     </div>`);
     capa.querySelector('#b-rep').addEventListener('click', repetir);
     if (siguiente) capa.querySelector('#b-sig').addEventListener('click', siguiente);
+    if (constancia) capa.querySelector('#b-const').addEventListener('click', constancia);
     setTimeout(() => capa.querySelector('.panel').focus(), 50);
   }
 
-  return { abrir, cerrar, abierta, dialogo, inicio, pausa, finJuego, resultados };
+  // Constancia de recorrido: resumen de los tres mundos y del jefe final
+  function constancia(d, alInicio) {
+    const colores = { 1: '#3767B3', 2: '#C9673F', 3: '#C99520' };
+    abrir(`<div class="panel ancho constancia" role="dialog" aria-modal="true" aria-labelledby="c-titulo" tabindex="-1">
+      <div class="tag">Saltos del Saber · UPN Unidad 112</div>
+      <h2 id="c-titulo">Constancia de recorrido</h2>
+      <p><b>${esc(d.nombre)}</b>${d.grupo ? ' (grupo ' + esc(d.grupo) + ')' : ''} ${d.completo ? 'completó los tres mundos y venció a la Gran Máquina Bancaria.' : 'venció a la Gran Máquina Bancaria. Los mundos marcados como pendientes aún no se registran en este navegador.'}</p>
+      <div class="sellos">${d.mundos.map(m => `<span style="--c:${m.r ? colores[m.n] : '#9AA5B1'}">${esc(m.sello)}${m.r ? '' : ' · pendiente'}</span>`).join('')}</div>
+      <table class="por-autor"><thead><tr><th>Mundo</th><th>Puntaje</th><th>Correctas</th></tr></thead><tbody>${
+        d.mundos.map(m => `<tr><td>${m.n}. ${esc(m.nombre)}</td><td>${m.r ? m.r.puntos : '—'}</td><td>${m.r ? m.r.ok + ' de ' + m.r.total : '—'}</td></tr>`).join('')
+      }</tbody></table>
+      <dl class="datos">
+        <div><dt>Puntaje total</dt><dd>${d.total}</dd></div>
+        <div><dt>Jefe final</dt><dd>Vencido</dd></div>
+        <div><dt>Fecha</dt><dd>${esc(d.fecha)}</dd></div>
+      </dl>
+      <div class="codigo">Código de verificación<b>${d.codigo}</b></div>
+      <p class="nota">Toma una captura de esta constancia y súbela a Classroom o Teams si tu docente lo solicita.</p>
+      <div class="botones"><button type="button" class="btn" id="b-inicio">VOLVER AL INICIO</button></div>
+    </div>`);
+    capa.querySelector('#b-inicio').addEventListener('click', alInicio);
+    setTimeout(() => capa.querySelector('.panel').focus(), 50);
+  }
+
+  return { abrir, cerrar, abierta, dialogo, inicio, pausa, finJuego, resultados, constancia };
 })();
